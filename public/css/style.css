@@ -2,6 +2,7 @@ body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
+    padding-bottom: 50px;
   }
   
   header {
@@ -85,3 +86,40 @@ body {
       width: 100%;
     }
   }
+
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+.pagination-button {
+  margin: 0 10px;
+  padding: 5px 10px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.pagination-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.page-info {
+  margin: 0 15px;
+  font-size: 14px;
+}
+
+footer {
+  background-color: #333;
+  color: #fff;
+  text-align: center;
+  padding: 10px 0;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+}
+
+footer p {
+  margin: 0;
+}
