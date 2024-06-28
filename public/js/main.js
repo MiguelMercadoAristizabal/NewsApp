@@ -6,51 +6,25 @@ document.addEventListener("DOMContentLoaded", () => {
   const healthBtn = document.getElementById("health-btn");
   const scienceBtn = document.getElementById("science-btn");
   const entertainmentBtn = document.getElementById("entertainment-btn");
-  const articles = document.getElementById("articles");
-
   const searchInput = document.getElementById("search");
 
+  const articles = document.getElementById("articles");
   const baseUrl = "http://localhost:3000/api/news/";
+  let currentArticles = [];
+  let currentPage = 1;
+  const articlesPerPage = 6;
 
-  // Función para cargar noticias por categoría
   const fetchNewsByCategory = (category) => {
     fetch(baseUrl + category)
-      .then((response) => {
-        console.log("entro");
-        console.log(response);
-        return response.json();
-      })
+      .then((response) => response.json())
       .then((data) => {
-        articles.innerHTML = "";
-        if (Array.isArray(data) && data.length > 0) {
-          data.forEach((article) => {
-            console.log(article.url_to_image);
-            if (
-              article.title !== "[Removed]" &&
-              article.url_to_image !== null &&
-              article.description !== null
-            ) {
-              const div = document.createElement("div");
-              div.classList.add("article");
-              let imageElement = "";
-              if (article.url_to_image) {
-                imageElement = `<img src="${article.url_to_image}" alt="${article.title}">`;
-              }
-              div.innerHTML = `
-                ${imageElement}
-                <h2>${article.title}</h2>
-                <p>${article.description || ""}</p>
-                <p>Source: ${article.source_name}</p>
-                <p>Author: ${article.author || "Unknown"}</p>
-                <p>Published at: ${article.published_at}</p>
-                <a href="${article.url}" target="_blank">Read more</a>
-              `;
-              articles.appendChild(div);
-            }
-          });
-        } else {
-          articles.innerHTML = "<p>No articles found.</p>";
-        }
+        currentArticles = data.filter(article => 
+          article.title !== "[Removed]" &&
+          article.url_to_image !== null &&
+          article.description !== null
+        );
+        currentPage = 1;
+        displayArticles();
       })
       .catch((error) => {
         console.error("Error fetching news:", error);
@@ -58,6 +32,70 @@ document.addEventListener("DOMContentLoaded", () => {
       });
   };
 
+  const displayArticles = () => {
+    articles.innerHTML = "";
+    const startIndex = (currentPage - 1) * articlesPerPage;
+    const endIndex = Math.min(startIndex + articlesPerPage, currentArticles.length);
+    
+    for (let i = startIndex; i < endIndex; i++) {
+      const article = currentArticles[i];
+      const div = document.createElement("div");
+      div.classList.add("article");
+      let imageElement = article.url_to_image ? `<img src="${article.url_to_image}" alt="${article.title}">` : "";
+      div.innerHTML = `
+        ${imageElement}
+        <h2>${article.title}</h2>
+        <p>${article.description || ""}</p>
+        <p>Source: ${article.source_name}</p>
+        <p>Author: ${article.author || "Unknown"}</p>
+        <p>Published at: ${article.published_at}</p>
+        <a href="${article.url}" target="_blank">Read more</a>
+      `;
+      articles.appendChild(div);
+    }
+
+    displayPagination();
+  };
+
+  const displayPagination = () => {
+    const totalPages = Math.ceil(currentArticles.length / articlesPerPage);
+    const paginationDiv = document.createElement("div");
+    paginationDiv.classList.add("pagination");
+
+    const prevButton = document.createElement("button");
+    prevButton.textContent = "Anterior";
+    prevButton.classList.add("pagination-button");
+    prevButton.disabled = currentPage === 1;
+    prevButton.addEventListener("click", () => {
+      if (currentPage > 1) {
+        currentPage--;
+        displayArticles();
+      }
+    });
+
+    const nextButton = document.createElement("button");
+    nextButton.textContent = "Siguiente";
+    nextButton.disabled = currentPage === totalPages;
+    nextButton.classList.add("pagination-button");
+    nextButton.addEventListener("click", () => {
+      if (currentPage < totalPages) {
+        currentPage++;
+        displayArticles();
+      }
+    });
+
+    const pageInfo = document.createElement("span");
+    pageInfo.textContent = `Página ${currentPage} de ${totalPages}`;
+    pageInfo.classList.add("page-info");
+
+    paginationDiv.appendChild(prevButton);
+    paginationDiv.appendChild(pageInfo);
+    paginationDiv.appendChild(nextButton);
+
+    articles.appendChild(paginationDiv);
+  };
+
+  // Modificar la función de búsqueda
   searchInput.addEventListener("input", async () => {
     const searchTerm = searchInput.value.trim();
     if (searchTerm) {
@@ -66,8 +104,13 @@ document.addEventListener("DOMContentLoaded", () => {
       );
       const data = await response.json();
       if (data.status === "ok") {
-        // Process the response data, e.g., display the results on the page
-        displayArticles(data.articles);
+        currentArticles = data.articles.filter(article => 
+          article.title !== "[Removed]" &&
+          article.urlToImage !== null &&
+          article.description !== null
+        );
+        currentPage = 1;
+        displayArticles();
       } else {
         console.error("Error:", data.message);
       }
@@ -75,35 +118,6 @@ document.addEventListener("DOMContentLoaded", () => {
       articles.innerHTML = "";
     }
   });
-
-  function displayArticles(articles) {
-    const articlesSection = document.getElementById('articles');
-    articlesSection.innerHTML = '';
-    articles.forEach(article => {
-      if (
-        article.title !== "[Removed]" &&
-        article.urlToImage !== null &&
-        article.description !== null
-      ) {
-        const div = document.createElement("div");
-        div.classList.add("article");
-        let imageElement = "";
-        if (article.urlToImage) {
-          imageElement = `<img src="${article.urlToImage}" alt="${article.title}">`;
-        }
-        div.innerHTML = `
-          ${imageElement}
-          <h2>${article.title}</h2>
-          <p>${article.description || ""}</p>
-          <p>Source: ${article.source.name}</p>
-          <p>Author: ${article.author || "Unknown"}</p>
-          <p>Published at: ${new Date(article.publishedAt).toLocaleString()}</p>
-          <a href="${article.url}" target="_blank">Read more</a>
-        `;
-        articlesSection.appendChild(div);
-      }
-    });
-  }
 
   // Event listeners para los botones de categoría
   allBtn.addEventListener("click", () => {
